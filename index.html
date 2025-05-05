@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Đóng Góp & Quyên Góp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Áp dụng font Roboto Black cho toàn bộ trang */
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 900; /* Sử dụng Roboto Black làm mặc định */
+            background-color: #f7fafc;
+        }
+        /* Tùy chỉnh màu sắc và các giá trị khác */
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'custom-blue': '#EBF8FF',
+                        'custom-blue-dark': '#2B6CB0',
+                        'custom-red-border': '#E53E3E', // Giữ lại để tham khảo nếu cần đổi lại
+                        'custom-amount-blue': '#4a90e2',
+                        'custom-border-gray': '#D1D5DB', // Màu xám cho viền (đã thêm lại)
+                    },
+                    borderRadius: {
+                        'xl': '0.75rem', // 12px
+                    },
+                    boxShadow: {
+                        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // Giữ lại drop shadow
+                    },
+                    spacing: {
+                        '6': '1.5rem',
+                    }
+                }
+            }
+        }
+
+        /* Điều chỉnh font-weight cho dễ đọc */
+       .item-content p, .item-content .text-sm, .item-content .italic {
+             font-weight: 400;
+        }
+         .item-content .font-medium {
+             font-weight: 500;
+         }
+         .item-content .font-semibold {
+             font-weight: 700;
+         }
+         h1 {
+            font-weight: 900;
+         }
+         #history-feed > div {
+            display: block;
+            border-width: 2px; /* Đặt độ dày viền cố định */
+            /* Màu viền sẽ được đặt bởi class trong JS */
+         }
+
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <h1 class="text-2xl md:text-3xl text-center text-custom-blue-dark mb-8">
+            Lịch Sử Đóng Góp & Quyên Góp
+        </h1>
+
+        <div id="history-feed" class="space-y-6">
+            <p class="text-center text-gray-500" id="loading-message">Đang tải dữ liệu...</p>
+        </div>
+
+        <footer class="text-center text-gray-500 mt-10 text-sm font-normal">
+            © 2025 Tên Trang Web Của Bạn. Bảo lưu mọi quyền.
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Dữ liệu mẫu (Giữ nguyên)
+            const historyData = [
+                 { type: 'donation', user: 'Người dùng X', date: '2025-05-03T15:30:00Z', amount: '500,000 VNĐ', message: 'Chúc trang web ngày càng phát triển!' },
+                 { type: 'contribution', user: 'Người dùng A', date: '2025-05-01T10:00:00Z', content: 'Giao diện trang chủ cần cải thiện thêm về tốc độ tải trang.' },
+                 { type: 'contribution', user: 'Người dùng B', date: '2025-04-28T09:15:00Z', content: 'Tính năng tìm kiếm hoạt động rất tốt, cảm ơn đội ngũ phát triển!' },
+                 { type: 'donation', user: 'Người dùng Y', date: '2025-04-25T11:00:00Z', amount: '200,000 VNĐ', message: null },
+                 { type: 'donation', user: 'Ẩn danh', date: '2025-04-18T14:20:00Z', amount: '1,000,000 VNĐ', message: 'Ủng hộ dự án.' },
+                 { type: 'contribution', user: 'Người dùng C', date: '2025-04-15T16:45:00Z', content: 'Nên bổ sung thêm chủ đề tối (dark mode) cho trang web.' },
+                 { type: 'contribution', user: 'Người dùng D', date: '2025-04-10T08:00:00Z', content: 'Font chữ hơi nhỏ trên thiết bị di động.' },
+                 { type: 'donation', user: 'Người dùng Z', date: '2025-04-05T19:05:00Z', amount: '100,000 VNĐ', message: null },
+            ];
+
+            // Hàm định dạng ngày tháng (Giữ nguyên)
+            function formatDate(dateString) {
+                try {
+                    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+                    return new Date(dateString).toLocaleDateString('vi-VN', options);
+                } catch (error) {
+                    console.error("Error formatting date:", dateString, error);
+                    return "Ngày không hợp lệ";
+                }
+            }
+
+            // Lấy phần tử chứa feed và thông báo tải (Giữ nguyên)
+            const feedContainer = document.getElementById('history-feed');
+            const loadingMessage = document.getElementById('loading-message');
+
+            if (!feedContainer) {
+                console.error("Error: Could not find element with ID 'history-feed'");
+                if(loadingMessage) loadingMessage.textContent = "Lỗi: Không tìm thấy vùng chứa dữ liệu.";
+                return;
+            }
+
+            if (loadingMessage) {
+                loadingMessage.remove();
+            } else {
+                feedContainer.innerHTML = '';
+            }
+
+            // Sắp xếp dữ liệu (Giữ nguyên)
+            try {
+                 historyData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } catch(error) {
+                console.error("Error sorting data:", error);
+                 feedContainer.innerHTML = '<p class="text-center text-red-500">Lỗi khi sắp xếp dữ liệu.</p>';
+                 return;
+            }
+
+            // Tạo HTML cho từng mục
+            if (historyData.length === 0) {
+                 feedContainer.innerHTML = '<p class="text-center text-gray-500">Chưa có đóng góp hay quyên góp nào.</p>';
+            } else {
+                historyData.forEach((item, index) => {
+                    try {
+                        const itemElement = document.createElement('div');
+                        // **Thay đổi ở đây:** Áp dụng lớp chung: padding, shadow, bo tròn, và VIỀN XÁM
+                        itemElement.className = 'p-4 shadow-md rounded-xl border-custom-border-gray';
+
+                        // Div chứa nội dung chính
+                        const contentWrapper = document.createElement('div');
+                        contentWrapper.className = 'item-content';
+
+                        let contentHTML = '';
+                        const formattedDate = formatDate(item.date);
+
+                        if (item.type === 'contribution') {
+                            // Chỉ cần thêm màu nền, viền đã được đặt ở trên
+                            itemElement.classList.add('bg-custom-blue');
+                            // Bỏ itemElement.classList.add('border-black');
+                            contentHTML = `
+                                <p class="font-medium text-custom-blue-dark">${item.user || 'Người dùng ẩn danh'}</p>
+                                <p class="text-sm text-gray-600 mb-1">Ngày: ${formattedDate}</p>
+                                <p class="text-gray-800">"${item.content || 'Nội dung trống'}"</p>
+                            `;
+                        } else if (item.type === 'donation') {
+                            // Chỉ cần thêm màu nền, viền đã được đặt ở trên
+                            itemElement.classList.add('bg-white');
+                            // Bỏ itemElement.classList.add('border-custom-red-border');
+                            contentHTML = `
+                                <p class="font-medium text-red-600">${item.user || 'Người dùng ẩn danh'}</p>
+                                <p class="text-sm text-gray-600 mb-1">Ngày: ${formattedDate}</p>
+                                <p class="font-semibold amount-text">Số tiền: ${item.amount || 'Không xác định'}</p>
+                                ${item.message ? `<p class="text-sm italic text-gray-500 mt-1">"${item.message}"</p>` : ''}
+                            `;
+                        } else {
+                             console.warn(`Unknown item type at index ${index}:`, item.type);
+                             // Viền xám đã được đặt mặc định
+                             contentHTML = `<p class="text-red-500">Loại mục không xác định</p>`;
+                        }
+
+                        contentWrapper.innerHTML = contentHTML;
+                        itemElement.appendChild(contentWrapper);
+
+                        // Áp dụng màu xanh cho số tiền (Giữ nguyên)
+                        if (item.type === 'donation') {
+                            const amountElement = itemElement.querySelector('.amount-text');
+                            if (amountElement) {
+                                amountElement.style.color = '#4a90e2';
+                            }
+                        }
+
+                        feedContainer.appendChild(itemElement);
+                    } catch (error) {
+                         console.error(`Error processing item at index ${index}:`, item, error);
+                         const errorElement = document.createElement('div');
+                         errorElement.className = 'p-4 border-2 border-red-500 rounded-xl bg-red-100 text-red-700';
+                         errorElement.textContent = `Lỗi khi hiển thị mục ${index + 1}. Vui lòng kiểm tra console.`;
+                         feedContainer.appendChild(errorElement);
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>
